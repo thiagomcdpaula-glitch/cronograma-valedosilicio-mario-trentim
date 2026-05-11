@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cronograma Vale do Silício — Mario Trentim</title>
+<style>
+  :root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --accent: #0f172a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent: #f1f5f9;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .container { max-width: 720px; margin: 0 auto; padding: 0 16px; }
+
+  /* Header */
+  .header { text-align: center; padding: 32px 0 12px; }
+  .header-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; }
+  .header h1 { font-size: 26px; font-weight: 800; line-height: 1.15; color: var(--accent); }
+  .header-sub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+  /* Stats */
+  .stats { display: flex; justify-content: center; gap: 28px; padding: 14px 0 20px; }
+  .stat-value { font-size: 24px; font-weight: 800; }
+  .stat-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+
+  /* Day pills */
+  .day-pills { display: flex; gap: 6px; overflow-x: auto; padding: 0 0 14px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .day-pills::-webkit-scrollbar { display: none; }
+  .day-pill {
+    padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer;
+    font-size: 12px; font-weight: 700; white-space: nowrap; min-width: 56px;
+    transition: all 0.15s; font-family: inherit;
+  }
+
+  /* Filters */
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 0 12px; }
+  .filters select {
+    font-size: 11px; padding: 6px 10px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--card); color: var(--text-secondary);
+    cursor: pointer; font-family: inherit;
+  }
+  .clear-btn {
+    font-size: 11px; padding: 5px 10px; border-radius: 6px; border: none;
+    background: #fee2e2; color: #dc2626; cursor: pointer; font-weight: 600; font-family: inherit;
+  }
+
+  /* Day info */
+  .day-info { border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  .day-info-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .day-info-emoji { font-size: 24px; }
+  .day-info-title { font-weight: 800; font-size: 15px; }
+  .day-info-subtitle { font-size: 12px; color: var(--text-secondary); font-weight: 600; }
+  .day-info-logistics { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+  .day-events { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+  .day-event {
+    display: flex; gap: 8px; align-items: center; font-size: 11px;
+    padding: 5px 8px; border-radius: 5px; flex-wrap: wrap;
+  }
+  .day-event-time { font-weight: 700; color: var(--text-secondary); min-width: 72px; }
+  .day-event-name { color: var(--text); font-weight: 600; }
+  .day-event-loc { color: var(--text-muted); margin-left: auto; white-space: nowrap; font-size: 10px; }
+
+  /* Content cards */
+  .cards { display: flex; flex-direction: column; gap: 8px; padding-bottom: 40px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; cursor: pointer; transition: all 0.2s; position: relative;
+  }
+  .card.key-content { border-width: 2px; }
+  .card.checked { opacity: 0.5; }
+  .card-inner { display: flex; align-items: flex-start; gap: 10px; }
+  .checkbox {
+    width: 22px; height: 22px; min-width: 22px; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px; transition: all 0.2s;
+  }
+  .checkbox.unchecked { border: 2px solid #cbd5e1; }
+  .checkbox.is-checked { background: #10b981; }
+  .checkbox .checkmark { color: #fff; font-size: 13px; font-weight: 700; }
+  .card-body { flex: 1; min-width: 0; }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-bottom: 5px; }
+  .tag {
+    font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 3px;
+    white-space: nowrap; letter-spacing: 0.02em;
+  }
+  .card-title {
+    font-weight: 700; font-size: 13px; color: var(--text); margin-bottom: 4px; line-height: 1.35;
+  }
+  .card-title.done { text-decoration: line-through; }
+  .card-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 6px; }
+  .card-meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 11px; color: var(--text-muted); }
+
+  /* Day separator */
+  .day-separator {
+    display: flex; align-items: center; gap: 10px; padding: 14px 0 6px;
+  }
+  .day-separator-line { flex: 1; height: 1px; background: var(--border); }
+  .day-separator-label { font-size: 11px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
+
+  /* Legend */
+  .legend { border-top: 1px solid var(--border); padding: 16px 0 28px; }
+  .legend-title { font-size: 10px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .legend-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* Empty */
+  .empty { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; }
+
+  /* Progress bar */
+  .progress-wrap { padding: 0 0 16px; }
+  .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #10b981; border-radius: 3px; transition: width 0.4s ease; }
+  .progress-label { font-size: 10px; color: var(--text-muted); margin-top: 4px; text-align: right; }
+
+  @media (max-width: 480px) {
+    .header h1 { font-size: 22px; }
+    .stats { gap: 20px; }
+    .stat-value { font-size: 20px; }
+    .day-event { flex-direction: column; align-items: flex-start; gap: 2px; }
+    .day-event-loc { margin-left: 0; }
+    .card-meta { font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container" id="app"></div>
+
+<script>
+const DAYS = [
+  { id:0, date:"11/Mai (Dom)", label:"Viagem", emoji:"✈️", subtitle:"GRU → EWR", color:"#64748b", logistics:"Voo 148: GRU 21h → EWR 05h40 (12/Mai). Duração: 9h40.", events:[] },
+  { id:1, date:"12/Mai (Seg)", label:"Chegada", emoji:"🛬", subtitle:"SFO + Welcome Event", color:"#0ea5e9", logistics:"EWR → SFO: 08h–11h19. Check-in hotel. Welcome Event LATAM: 18h–21h (Farmer's Union, San Jose).", events:[{time:"18:00–21:00",name:"Welcome Event LATAM",location:"Farmer's Union, San Jose",type:"evento"}] },
+  { id:2, date:"13/Mai (Ter)", label:"Meta Summit", emoji:"🎤", subtitle:"Palco Principal (dia inteiro)", color:"#0066ff", logistics:"Chegar 08h no Convention Center. Portas 09h15. Programa 09h45–17h.", events:[{time:"08:00–17:00",name:"Meta Summit — Palco Principal",location:"San Jose Convention Center",type:"evento"}] },
+  { id:3, date:"14/Mai (Qua)", label:"Meta + WhatsApp", emoji:"🏢", subtitle:"Sessions + Campus Tour", color:"#0066ff", logistics:"Sessões interativas 08h–13h30. Transfer Meta HQ 13h30. WhatsApp Sessions 14h40–17h. Campus Tour 16h–17h.", events:[{time:"08:00–13:30",name:"Sessões Interativas",location:"Convention Center",type:"evento"},{time:"13:30",name:"Transfer → Meta HQ",location:"Menlo Park",type:"logistica"},{time:"14:40–17:00",name:"WhatsApp Sessions for Business",location:"Meta HQ",type:"evento"},{time:"16:00–17:00",name:"Tour pelo Campus da Meta",location:"Meta HQ",type:"evento"}] },
+  { id:4, date:"15/Mai (Qui)", label:"Dia Livre 1", emoji:"🗺️", subtitle:"Visitas Tech + PMI", color:"#10b981", logistics:"Dia todo livre. Roteiro: Stanford → Sand Hill Rd → Computer History Museum → Googleplex → Microsoft Reactor → PMI SF → Golden Gate.", events:[{time:"08:00–09:30",name:"Stanford University",location:"Palo Alto",type:"visita"},{time:"10:00–10:30",name:"Sand Hill Road",location:"Menlo Park",type:"visita"},{time:"11:00–12:30",name:"Computer History Museum",location:"Mountain View",type:"visita"},{time:"12:30–13:00",name:"Googleplex (externo)",location:"Mountain View",type:"visita"},{time:"14:30–16:00",name:"Microsoft Reactor",location:"San Francisco",type:"visita"},{time:"16:30–18:00",name:"PMI San Francisco",location:"San Francisco",type:"evento"},{time:"18:30+",name:"Golden Gate (pôr do sol)",location:"San Francisco",type:"visita"}] },
+  { id:5, date:"16/Mai (Sex)", label:"Dia Livre 2", emoji:"🎬", subtitle:"Extras + Gravação Planejada", color:"#f59e0b", logistics:"Último dia cheio. Visitas pela manhã. BLOCO DE GRAVAÇÃO 13h–15h (prioridade máxima). Voo amanhã 06h30.", events:[{time:"08:30–10:00",name:"Anthropic (se confirmado) / Apple Park",location:"SF / Cupertino",type:"visita"},{time:"10:30–12:00",name:"Berkeley / conteúdo hotel",location:"Berkeley / Hotel",type:"visita"},{time:"13:00–15:00",name:"⭐ BLOCO DE GRAVAÇÃO",location:"Hotel",type:"gravacao"},{time:"15:00–17:00",name:"Extras (AI Council, Apex, Brazil in SV)",location:"Variável",type:"visita"}] },
+  { id:6, date:"17/Mai (Sáb)", label:"Volta", emoji:"🏠", subtitle:"SFO → IAD → GRU", color:"#64748b", logistics:"SFO → IAD: 06h30–14h44. Layover 8h Washington. IAD → GRU: 22h30–09h30 (18/Mai).", events:[] },
+];
+
+const CONTENT_TYPES = {
+  reels:{label:"Reels",color:"#e11d48",bg:"#fef2f2",icon:"🎬"},
+  stories:{label:"Stories",color:"#f59e0b",bg:"#fffbeb",icon:"📱"},
+  linkedin:{label:"LinkedIn",color:"#0a66c2",bg:"#eff6ff",icon:"💼"},
+  broll:{label:"B-roll",color:"#8b5cf6",bg:"#f5f3ff",icon:"🎥"},
+  youtube:{label:"YouTube",color:"#dc2626",bg:"#fef2f2",icon:"▶️"},
+  foto:{label:"Foto",color:"#059669",bg:"#ecfdf5",icon:"📷"},
+  texto:{label:"Texto",color:"#6b7280",bg:"#f9fafb",icon:"✍️"},
+};
+
+const PILLARS = {
+  ia:{label:"IA Infraestrutura",color:"#7c3aed"},
+  pmo:{label:"PMO Cognitivo",color:"#0066ff"},
+  gp:{label:"GP pra Vida",color:"#10b981"},
+  autoridade:{label:"Autoridade",color:"#f59e0b"},
+  bastidores:{label:"Bastidores",color:"#ec4899"},
+};
+
+const CONTENTS = [
+  {day:0,type:"stories",pillar:"bastidores",priority:"must",title:"Selfie de embarque",desc:"\"Partindo pro Vale do Silício a convite da Meta. Nos próximos dias trago o que está acontecendo de verdade com IA, marketing e GP.\"",duration:"15–30s",where:"Portão GRU"},
+  {day:0,type:"linkedin",pillar:"autoridade",priority:"must",title:"Post de partida",desc:"Foto no portão + legenda editorial: \"A convite da Meta, estou indo ao Vale do Silício para o Performance Marketing Summit.\"",duration:"—",where:"GRU"},
+  {day:1,type:"stories",pillar:"bastidores",priority:"must",title:"\"Cheguei\"",desc:"Selfie/vídeo rápido em SFO ou hotel. Manter narrativa de viagem.",duration:"15s",where:"SFO / Hotel"},
+  {day:1,type:"broll",pillar:"bastidores",priority:"nice",title:"B-roll de chegada",desc:"Paisagem, letreiros, Silicon Valley vibes. Filmar pelo carro no trajeto aeroporto → hotel.",duration:"2–3 clips 10s",where:"Trajeto"},
+  {day:1,type:"stories",pillar:"bastidores",priority:"must",title:"Bastidores Welcome Event",desc:"Fotos e stories do happy hour LATAM. Marcar @Meta. Networking em ação.",duration:"Vários clips",where:"Farmer's Union"},
+  {day:1,type:"reels",pillar:"bastidores",priority:"nice",title:"Mini-depoimento pós-evento",desc:"\"Acabei de sair do welcome event da Meta. O que me chamou atenção foi [X].\" Raw, sem edição pesada.",duration:"30–60s",where:"Hotel"},
+  {day:2,type:"reels",pillar:"autoridade",priority:"must",title:"\"O que esperar do Summit\"",desc:"Vídeo na frente do Convention Center: \"Hoje é o dia do Meta Performance Marketing Summit. Vou trazer os insights mais relevantes.\"",duration:"30–60s",where:"Entrada Convention Center"},
+  {day:2,type:"foto",pillar:"bastidores",priority:"must",title:"Fotos no evento",desc:"Palco, plateia, painéis, crachá, stand da Meta. Banco de imagens pra uso futuro.",duration:"—",where:"Convention Center"},
+  {day:2,type:"stories",pillar:"bastidores",priority:"must",title:"Stories de bastidores",desc:"Momentos-chave, reações, networking. NÃO filmar telas de apresentação. Filmar ambiente.",duration:"Vários 15s",where:"Convention Center"},
+  {day:2,type:"reels",pillar:"ia",priority:"must",title:"🔑 \"3 insights do Meta Summit\"",desc:"Mario senta no hotel e fala direto: \"Acabei de sair do Meta Summit. 3 coisas que me chamaram atenção: [1], [2], [3].\" Gravar LOGO após o evento.",duration:"60–90s",where:"Hotel, 17h30–19h"},
+  {day:2,type:"linkedin",pillar:"pmo",priority:"must",title:"LinkedIn editorial — Summit",desc:"\"O que um Summit de marketing da Meta tem a ver com o futuro do PMO?\" — ponte Mario. Postar na manhã seguinte.",duration:"—",where:"Escrever à noite"},
+  {day:3,type:"stories",pillar:"bastidores",priority:"must",title:"Stories sessões interativas",desc:"Bastidores de participação. Foco em interação, não em slides.",duration:"Clips curtos",where:"Convention Center"},
+  {day:3,type:"reels",pillar:"autoridade",priority:"must",title:"🔑 Campus da Meta — walking & talking",desc:"PRIORIDADE MÁXIMA. Letreiro, prédios, jardim. Mario andando: \"Estou no campus da Meta em Menlo Park. É aqui que a IA que vocês usam todo dia está sendo construída.\"",duration:"Vários clips",where:"Campus Meta, 16h–17h"},
+  {day:3,type:"foto",pillar:"autoridade",priority:"must",title:"Selfie no letreiro da Meta",desc:"Obrigatória. Usar em LinkedIn, Instagram, e como asset para ads futuros.",duration:"—",where:"Campus Meta"},
+  {day:3,type:"reels",pillar:"ia",priority:"must",title:"\"O futuro do WhatsApp Business\"",desc:"\"O WhatsApp não é mais só mensageiro. A Meta está transformando ele em [insight].\" Conectar com comunicação empresarial.",duration:"60–90s",where:"Hotel/campus"},
+  {day:3,type:"reels",pillar:"ia",priority:"nice",title:"\"Por dentro da Meta — o que aprendi\"",desc:"Compilação do dia: Summit + Campus + WhatsApp. Reflexivo. Postar no dia seguinte.",duration:"60–90s",where:"Hotel, à noite"},
+  {day:3,type:"linkedin",pillar:"ia",priority:"must",title:"LinkedIn: WhatsApp como plataforma",desc:"\"O WhatsApp está virando plataforma de negócios. Mas sem processo, vai ser só mais uma ferramenta subutilizada.\" Tese central.",duration:"—",where:"Escrever à noite"},
+  {day:4,type:"reels",pillar:"gp",priority:"must",title:"🔑 \"Stanford — onde a inovação começa\"",desc:"Mario pelo campus: \"Aqui nasceram Google, HP, LinkedIn... Mas o diferencial nunca foi só tecnologia. Foi método. Capacidade de tirar uma ideia do papel.\" EVERGREEN.",duration:"60–90s",where:"Stanford, 08h–09h"},
+  {day:4,type:"broll",pillar:"bastidores",priority:"must",title:"B-roll Stanford",desc:"Prédios, palm trees, campus vibe. Banco de assets.",duration:"5–10 clips 10s",where:"Stanford"},
+  {day:4,type:"reels",pillar:"bastidores",priority:"nice",title:"Sand Hill Road — curiosidade",desc:"\"Essa rua financia o futuro. Mais venture capital por m² do que qualquer lugar do mundo.\"",duration:"15–30s",where:"Sand Hill Road"},
+  {day:4,type:"reels",pillar:"ia",priority:"must",title:"🔑 \"Do primeiro computador à IA\"",desc:"Na frente de máquinas antigas: \"Em 2003 fiz meu TCC sobre IA no ITA. 23 anos depois, permeia cada fase da GP. O que não mudou? Sem processo, ferramenta não gera resultado.\" EVERGREEN.",duration:"60–90s",where:"Computer History Museum"},
+  {day:4,type:"broll",pillar:"bastidores",priority:"nice",title:"B-roll Googleplex",desc:"Letreiro, bikes, campus externo. Asset visual.",duration:"5–10 min",where:"Googleplex"},
+  {day:4,type:"reels",pillar:"autoridade",priority:"must",title:"🔑 \"Microsoft Reactor — IA na prática\"",desc:"\"Estou no Microsoft Reactor em SF. Como Microsoft Regional Director, acompanho [insight Copilot/Azure AI].\" Credencial + conteúdo técnico acessível.",duration:"60–90s",where:"Microsoft Reactor"},
+  {day:4,type:"reels",pillar:"autoridade",priority:"must",title:"PMI San Francisco",desc:"Se speaker: gravar trecho. Se não: bastidores + reflexão. \"O PMI está em [X] países. Visitei o chapter de SF.\" Conexão Board PMI.",duration:"Vários",where:"PMI SF, 16h30–18h"},
+  {day:4,type:"broll",pillar:"gp",priority:"must",title:"Golden Gate — B-roll + reflexivo",desc:"B-roll obrigatório. Vídeo opcional: \"Alguém planejou cada cabo, cada viga. É GP em escala. Vale pra qualquer projeto.\" EVERGREEN GP Pessoal.",duration:"B-roll + 30–60s",where:"Golden Gate, 18h30"},
+  {day:4,type:"youtube",pillar:"bastidores",priority:"must",title:"Compilação \"Um dia no Vale\"",desc:"Stanford → Sand Hill → Google → Microsoft → PMI → Golden Gate. Narração sobre B-roll. Vídeo HERO do dia.",duration:"90s–3min",where:"Hotel, à noite"},
+  {day:5,type:"reels",pillar:"ia",priority:"nice",title:"Anthropic campus",desc:"\"Estou na Anthropic, por trás do Claude. Referência em IA segura.\" Se não conseguir tour, reflexão sobre IA responsável do lado de fora.",duration:"60s + B-roll",where:"Anthropic HQ (se confirmado)"},
+  {day:5,type:"broll",pillar:"bastidores",priority:"nice",title:"Berkeley",desc:"\"Berkeley e Stanford, as duas universidades que moldaram o Vale do Silício.\" Foco visual.",duration:"30–60s",where:"UC Berkeley (se for)"},
+  {day:5,type:"youtube",pillar:"ia",priority:"must",title:"⭐ \"O que aprendi em 5 dias no Vale\"",desc:"CONTEÚDO HERO. Mario sentado, resume insights: Meta Summit, campus, Stanford, Microsoft, PMI. Evergreen máximo.",duration:"3–5 min",where:"Hotel, 13h–15h"},
+  {day:5,type:"reels",pillar:"ia",priority:"must",title:"⭐ \"IA não é ferramenta. É infraestrutura.\"",desc:"\"Visitei Meta, Microsoft, Stanford. Todas: IA não é departamento. É infraestrutura.\" EVERGREEN. Ads + orgânico.",duration:"60–90s",where:"Hotel, 13h–15h"},
+  {day:5,type:"reels",pillar:"pmo",priority:"must",title:"⭐ \"O PMO vai desaparecer?\"",desc:"\"O que vi confirma: o PMO burocrático não sobrevive. O futuro é o PMO Cognitivo.\" Pode virar ad.",duration:"60–90s",where:"Hotel, 13h–15h"},
+  {day:5,type:"reels",pillar:"gp",priority:"must",title:"⭐ \"O que o Vale ensina sobre GP\"",desc:"Registro acessível. \"Inovação sem execução é só ideia. Execução é gestão de projetos.\" Topo de funil.",duration:"60–90s",where:"Hotel, 13h–15h"},
+  {day:5,type:"youtube",pillar:"ia",priority:"must",title:"⭐ \"3 coisas que mudaram minha visão\"",desc:"Reflexivo e pessoal. \"Eu achava X, agora vejo Y.\" Vulnerabilidade calibrada. Humaniza.",duration:"2–3 min",where:"Hotel, 13h–15h"},
+  {day:5,type:"stories",pillar:"bastidores",priority:"nice",title:"\"Até logo, Vale do Silício\"",desc:"\"Amanhã volto pro Brasil. Nos próximos dias transformo tudo em conteúdo pra vocês.\" Gera expectativa.",duration:"30–60s",where:"Hotel ou vista de SF"},
+  {day:6,type:"stories",pillar:"bastidores",priority:"nice",title:"Stories de despedida",desc:"Rápido no aeroporto: \"Partindo. Muita coisa pra processar.\"",duration:"15s",where:"SFO"},
+  {day:6,type:"linkedin",pillar:"autoridade",priority:"must",title:"LinkedIn post de encerramento",desc:"\"5 dias no Vale do Silício. [X] empresas. [Y] insights. O que eu levo: [3–5 aprendizados].\" Escrever no avião, postar ao chegar.",duration:"—",where:"No avião"},
+];
+
+// State
+let state = {
+  selectedDay: null,
+  filterType: null,
+  filterPriority: null,
+  checked: JSON.parse(localStorage.getItem('sv_checked') || '{}'),
+};
+
+function saveChecked() {
+  localStorage.setItem('sv_checked', JSON.stringify(state.checked));
+}
+
+function toggleCheck(idx) {
+  state.checked[idx] = !state.checked[idx];
+  saveChecked();
+  render();
+}
+
+function setDay(d) { state.selectedDay = d; render(); }
+function setFilterType(v) { state.filterType = v || null; render(); }
+function setFilterPriority(v) { state.filterPriority = v || null; render(); }
+function clearFilters() { state.filterType = null; state.filterPriority = null; render(); }
+
+function getFiltered() {
+  return CONTENTS.map((c,i) => ({...c, _idx:i})).filter(c => {
+    if (state.selectedDay !== null && c.day !== state.selectedDay) return false;
+    if (state.filterType && c.type !== state.filterType) return false;
+    if (state.filterPriority && c.priority !== state.filterPriority) return false;
+    return true;
+  });
+}
+
+function getStats() {
+  const total = CONTENTS.length;
+  const must = CONTENTS.filter(c => c.priority === 'must').length;
+  const done = Object.keys(state.checked).filter(k => state.checked[k]).length;
+  return {total, must, done};
+}
+
+function eventBg(type) {
+  if (type === 'evento') return '#dbeafe';
+  if (type === 'gravacao') return '#fef3c7';
+  return '#f1f5f9';
+}
+
+function render() {
+  const filtered = getFiltered();
+  const stats = getStats();
+  const ad = state.selectedDay !== null ? DAYS[state.selectedDay] : null;
+  const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
+
+  let html = '';
+
+  // Header
+  html += `<div class="header">
+    <div class="header-eyebrow">Cronograma de Conteúdo</div>
+    <h1>Vale do Silício 🇺🇸</h1>
+    <div class="header-sub">Mario Trentim · 11–17 Mai 2026</div>
+  </div>`;
+
+  // Stats
+  html += `<div class="stats">
+    <div style="text-align:center"><div class="stat-value" style="color:#475569">${stats.total}</div><div class="stat-label">Total</div></div>
+    <div style="text-align:center"><div class="stat-value" style="color:#dc2626">${stats.must}</div><div class="stat-label">Obrigatórios</div></div>
+    <div style="text-align:center"><div class="stat-value" style="color:#10b981">${stats.done}</div><div class="stat-label">Gravados</div></div>
+  </div>`;
+
+  // Progress
+  html += `<div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="progress-label">${pct}% concluído</div>
+  </div>`;
+
+  // Day pills
+  html += `<div class="day-pills">`;
+  html += `<button class="day-pill" style="background:${state.selectedDay===null?'#0f172a':'#f1f5f9'};color:${state.selectedDay===null?'#fff':'#64748b'}" onclick="setDay(null)">Todos</button>`;
+  DAYS.forEach(d => {
+    html += `<button class="day-pill" style="background:${state.selectedDay===d.id?d.color:'#f1f5f9'};color:${state.selectedDay===d.id?'#fff':'#64748b'}" onclick="setDay(${d.id})">${d.emoji} ${d.date.split(' ')[0]}</button>`;
+  });
+  html += `</div>`;
+
+  // Filters
+  html += `<div class="filters">`;
+  html += `<select onchange="setFilterType(this.value)"><option value="">Todos os formatos</option>`;
+  Object.entries(CONTENT_TYPES).forEach(([k,v]) => {
+    html += `<option value="${k}" ${state.filterType===k?'selected':''}>${v.icon} ${v.label}</option>`;
+  });
+  html += `</select>`;
+  html += `<select onchange="setFilterPriority(this.value)"><option value="">Todas prioridades</option>
+    <option value="must" ${state.filterPriority==='must'?'selected':''}>🔴 Obrigatório</option>
+    <option value="nice" ${state.filterPriority==='nice'?'selected':''}>⚪ Desejável</option></select>`;
+  if (state.filterType || state.filterPriority) {
+    html += `<button class="clear-btn" onclick="clearFilters()">✕ Limpar</button>`;
+  }
+  html += `</div>`;
+
+  // Day info
+  if (ad) {
+    html += `<div class="day-info" style="background:${ad.color}0a;border:1px solid ${ad.color}30">
+      <div class="day-info-header">
+        <span class="day-info-emoji">${ad.emoji}</span>
+        <div><div class="day-info-title" style="color:${ad.color}">${ad.date}</div>
+        <div class="day-info-subtitle">${ad.subtitle}</div></div>
+      </div>
+      <div class="day-info-logistics">${ad.logistics}</div>`;
+    if (ad.events.length) {
+      html += `<div class="day-events">`;
+      ad.events.forEach(ev => {
+        html += `<div class="day-event" style="background:${eventBg(ev.type)}">
+          <span class="day-event-time">${ev.time}</span>
+          <span class="day-event-name">${ev.name}</span>
+          <span class="day-event-loc">📍${ev.location}</span>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Cards
+  html += `<div class="cards">`;
+  if (filtered.length === 0) {
+    html += `<div class="empty">Nenhum conteúdo com esses filtros.</div>`;
+  }
+
+  let lastDay = -1;
+  filtered.forEach(item => {
+    const ct = CONTENT_TYPES[item.type];
+    const pl = PILLARS[item.pillar];
+    const isKey = item.title.includes('🔑') || item.title.includes('⭐');
+    const isChecked = !!state.checked[item._idx];
+
+    // Day separator when showing all
+    if (state.selectedDay === null && item.day !== lastDay) {
+      const d = DAYS[item.day];
+      html += `<div class="day-separator">
+        <span class="day-separator-label">${d.emoji} ${d.date} — ${d.subtitle}</span>
+        <div class="day-separator-line"></div>
+      </div>`;
+      lastDay = item.day;
+    }
+
+    html += `<div class="card ${isKey?'key-content':''} ${isChecked?'checked':''}" style="${isKey?'border-color:'+ct.color+';box-shadow:0 2px 8px '+ct.color+'22':''}" onclick="toggleCheck(${item._idx})">
+      <div class="card-inner">
+        <div class="checkbox ${isChecked?'is-checked':'unchecked'}">
+          ${isChecked?'<span class="checkmark">✓</span>':''}
+        </div>
+        <div class="card-body">
+          <div class="card-tags">
+            <span class="tag" style="background:${ct.bg};color:${ct.color}">${ct.icon} ${ct.label}</span>
+            ${pl?`<span class="tag" style="background:${pl.color}18;color:${pl.color}">${pl.label}</span>`:''}
+            <span class="tag" style="background:${item.priority==='must'?'#dc2626':'#e2e8f0'};color:${item.priority==='must'?'#fff':'#475569'}">${item.priority==='must'?'OBRIGATÓRIO':'DESEJÁVEL'}</span>
+          </div>
+          <div class="card-title ${isChecked?'done':''}">${item.title}</div>
+          <div class="card-desc">${item.desc}</div>
+          <div class="card-meta">
+            ${item.duration && item.duration !== '—' ? `<span>⏱ ${item.duration}</span>` : ''}
+            <span>📍 ${item.where}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Legend
+  html += `<div class="legend">
+    <div class="legend-title">Pilares de conteúdo</div>
+    <div class="legend-tags">`;
+  Object.entries(PILLARS).forEach(([k,v]) => {
+    html += `<span class="tag" style="background:${v.color}15;color:${v.color};font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px">${v.label}</span>`;
+  });
+  html += `</div></div>`;
+
+  document.getElementById('app').innerHTML = html;
+}
+
+render();
+</script>
+</body>
+</html>
